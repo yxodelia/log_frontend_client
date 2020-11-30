@@ -1,0 +1,37 @@
+# port
+containerPorts:
+    http:
+        port: 80
+        protocol: TCP
+
+# ingress
+ingress:
+    enabled: true
+    hosts:
+        - test.log-client.meshkit.cn
+    paths:
+        - path: /
+          servicePort: 80
+# config
+configMaps:
+    - name: nginx-config
+      as: volume
+      mountPath: /etc/nginx/conf.d
+      data:
+          index.conf: |+
+              server {
+                  listen          80;
+                  server_name     127.0.0.1;
+                  charset utf-8;
+
+                  resolver 114.114.114.114 223.5.5.5 223.6.6.6 valid=1200s;
+                  set $frontend_bucket_domain frontend-static.meshkit.cn;
+
+                  location ^~ / {
+                      rewrite '^/(.*)$' /staging/frontend-log-client/index.html break;
+
+                      proxy_pass http://$frontend_bucket_domain;
+                  }
+
+                }
+
